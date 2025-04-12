@@ -1,0 +1,20 @@
+{
+  "name": "ZWUtils-IDF8266",
+  "version": "1.0.0",
+  "description": "Utility collection for ESP8266 IDF-style C++ development",
+  "keywords": "rtos, esp8266",
+  "frameworks": "esp8266-rtos-sdk",
+  "platforms": "espressif8266",
+  "authors": [
+    {
+      "name": "Zhenyu (Adam) Wu",
+      "email": "Adam_5Wu@hotmail.com",
+      "maintainer": true
+    }
+  ],
+  "license": "LGPLv2.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Adam5Wu/ZWUtils_IDF8266.git"
+  }
+}
