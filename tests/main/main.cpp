@@ -261,14 +261,14 @@ esp_err_t _test_ZWMacros_EventWait() {
 esp_err_t _test_DataBuf() {
   {
     DataBuf buf;
-    const char* text = PrintToDataBuf(buf, "Test %d", 123);
+    const char* text = buf.PrintTo("Test %d", 123);
     TEST_ASSERT(text != NULL);
     TEST_RUN(strcmp(text, "Test 123") == 0);
   }
   {
     DataBuf buf(20);
     TEST_ASSERT(buf.size() == 20);
-    const char* text = PrintToDataBuf(buf, "Test %d", 123);
+    const char* text = buf.PrintTo("Test %d", 123);
     TEST_ASSERT(text != NULL);
     TEST_RUN(strcmp(text, "Test 123") == 0);
     TEST_RUN(buf.size() == 20);
@@ -277,13 +277,13 @@ esp_err_t _test_DataBuf() {
     DataBufStash stash;
     DataBuf& buf1 = stash.Allocate();
     TEST_ASSERT(stash.cache().size() == 1);
-    const char* text = PrintToDataBuf(buf1, "Test %d", 123);
+    const char* text = buf1.PrintTo("Test %d", 123);
     TEST_ASSERT(text != NULL);
     TEST_RUN(strcmp(text, "Test 123") == 0);
 
     const char* text2;
     stash.AllocAndPrep(20, [&](DataBuf& buf) {
-      text2 = PrintToDataBuf(buf, "Test %d", 234);
+      text2 = buf.PrintTo("Test %d", 234);
       return text2 != NULL ? ESP_OK : ESP_FAIL;
     });
     TEST_RUN(strcmp(text2, "Test 234") == 0);
@@ -318,15 +318,15 @@ esp_err_t _run() {
 }  // namespace
 }  // namespace zw::esp8266::utils::testing
 
-namespace T = zw::esp8266::utils::testing;
+using namespace zw::esp8266::utils::testing;
 
 extern "C" void app_main(void) {
-  ESP_LOGI(T::TAG, "ZWUtils for ESP8266 IDF testing");
+  ESP_LOGI(TAG, "ZWUtils for ESP8266 IDF testing");
 
-  if (T::_run() != ESP_OK) goto failed;
-  ESP_LOGE(T::TAG, "All tests complete, %d failed.", T::failed_count);
+  if (_run() != ESP_OK) goto failed;
+  ESP_LOGE(TAG, "All tests complete, %d failed.", failed_count);
   return;
 
 failed:
-  ESP_LOGE(T::TAG, "Test failed to complete!");
+  ESP_LOGE(TAG, "Test failed to complete!");
 }

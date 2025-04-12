@@ -11,17 +11,20 @@
 
 namespace zw::esp8266::utils {
 
-using DataBuf = std::vector<uint8_t>;
+class DataBuf : public std::vector<uint8_t> {
+ public:
+  using std::vector<uint8_t>::vector;
 
-template <typename BufType, class... Args>
-const char* PrintToDataBuf(BufType& buf, const char* fmt, Args&&... args) {
-  size_t str_len = 12;
-  do {
-    if (buf.size() < str_len) buf.resize(str_len);
-    str_len = snprintf((char*)&buf.front(), buf.size(), fmt, std::forward<Args>(args)...) + 1;
-  } while (str_len > buf.size());
-  return (char*)&buf.front();
-}
+  template <class... Args>
+  const char* PrintTo(const char* fmt, Args&&... args) {
+    size_t str_len = 12;
+    do {
+      if (size() < str_len) resize(str_len);
+      str_len = snprintf((char*)&front(), size(), fmt, std::forward<Args>(args)...) + 1;
+    } while (str_len > size());
+    return (char*)&front();
+  }
+};
 
 // Provide life time management for multiple data buffers.
 // Useful for cases where multiple pieces of DataBuf need to be kept alive.
