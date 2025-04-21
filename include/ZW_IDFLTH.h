@@ -20,7 +20,7 @@
   do {                                                                                      \
     esp_err_t __err_rc = (x);                                                               \
     if (__err_rc != ESP_OK) {                                                               \
-      ESP_LOGW(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
+      ESP_LOGD(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
       return __err_rc;                                                                      \
     }                                                                                       \
   } while (0)
@@ -39,7 +39,7 @@
   do {                                                                                      \
     esp_err_t __err_rc = (x);                                                               \
     if (__err_rc != ESP_OK) {                                                               \
-      ESP_LOGW(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
+      ESP_LOGD(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
       goto goto_tag;                                                                        \
     }                                                                                       \
   } while (0)

@@ -10,6 +10,19 @@
 
 namespace zw::esp8266::utils {
 
+class ESPErrorStatus {
+ public:
+  const esp_err_t value;
+  const std::string message;
+
+  ESPErrorStatus() : ESPErrorStatus(ESP_OK, "") {}
+  ESPErrorStatus(esp_err_t value) : ESPErrorStatus(value, "") {}
+  ESPErrorStatus(const std::string& message) : ESPErrorStatus(ESP_FAIL, message) {}
+  ESPErrorStatus(esp_err_t value, const std::string& message) : value(value), message(message) {}
+
+  operator bool() const { return value == ESP_OK; }
+};
+
 template <typename T>
 class DataOrError {
  public:

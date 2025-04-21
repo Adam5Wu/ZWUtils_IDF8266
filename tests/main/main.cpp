@@ -8,6 +8,7 @@
 
 #include "FreeRTOS.h"
 #include "freertos/event_groups.h"
+#include "freertos/semphr.h"
 
 #include "ZWUtils.hpp"
 
@@ -64,8 +65,10 @@ esp_err_t _test_ZWIDFLTH() {
   failed:
     return ESP_FAIL;
   }() == ESP_OK);
-  TEST_RUN([] {
-    ESP_GOTO_ON_ERROR(ESP_FAIL, failed);
+  // Work around an internal compiler error (cp/constexpr.c:4809)
+  volatile esp_err_t errcode = ESP_FAIL;
+  TEST_RUN([&] {
+    ESP_GOTO_ON_ERROR(errcode, failed);
     return ESP_OK;
   failed:
     return ESP_FAIL;
@@ -192,6 +195,29 @@ esp_err_t _test_ZWAutoRelease() {
 
 esp_err_t _test_ZWDataOrError() {
   {
+    ESPErrorStatus Test;
+    TEST_RUN(Test)
+    TEST_RUN(Test.value == ESP_OK);
+    TEST_RUN(Test.message.empty());
+  }
+  {
+    ESPErrorStatus Test(ESP_ERR_NO_MEM);
+    TEST_RUN(!Test);
+    TEST_RUN(Test.value == ESP_ERR_NO_MEM);
+    TEST_RUN(Test.message.empty());
+  }
+  {
+    ESPErrorStatus Test("Test error");
+    TEST_RUN(Test.value == ESP_FAIL);
+    TEST_RUN(Test.message == "Test error");
+  }
+  {
+    ESPErrorStatus Test(ESP_ERR_TIMEOUT, "Test timeout");
+    TEST_RUN(Test.value == ESP_ERR_TIMEOUT);
+    TEST_RUN(Test.message == "Test timeout");
+  }
+
+  {
     DataOrError<std::string> Test("Test");
     TEST_RUN(Test.error() == ESP_OK);
     TEST_RUN(Test == true);
@@ -258,6 +284,55 @@ esp_err_t _test_ZWMacros_EventWait() {
   return ESP_OK;
 }
 
+esp_err_t _test_ZWMacros_Semaphore() {
+  {
+    AutoReleaseRes<SemaphoreHandle_t> TestMutex(xSemaphoreCreateMutex(), [](SemaphoreHandle_t&& x) {
+      if (x != NULL) vSemaphoreDelete(x);
+    });
+    TEST_ASSERT(*TestMutex != NULL);
+
+    {
+      bool timedout = false;
+      ZW_ACQUIRE_FOR_SCOPE(*TestMutex, 10, timedout = true);
+      TEST_ASSERT(timedout == false);
+
+      {
+        // This is a non-recursive mutex, second acquire should block until timeout
+        ZW_ACQUIRE_FOR_SCOPE(*TestMutex, 10, timedout = true);
+        TEST_RUN(timedout);
+      }
+    }
+    {
+      // The last acquire should expire with its scope
+      bool timedout = false;
+      ZW_ACQUIRE_FOR_SCOPE(*TestMutex, 10, timedout = true);
+      TEST_RUN(timedout == false);
+    }
+  }
+
+  {
+    AutoReleaseRes<SemaphoreHandle_t> TestMutex(xSemaphoreCreateRecursiveMutex(),
+                                                [](SemaphoreHandle_t&& x) {
+                                                  if (x != NULL) vSemaphoreDelete(x);
+                                                });
+    TEST_ASSERT(*TestMutex != NULL);
+
+    {
+      bool timedout = false;
+      ZW_RECURSIVE_ACQUIRE_FOR_SCOPE(*TestMutex, 10, timedout = true);
+      TEST_ASSERT(timedout == false);
+
+      {
+        // Second acquire should succeed
+        ZW_RECURSIVE_ACQUIRE_FOR_SCOPE(*TestMutex, 10, timedout = true);
+        TEST_RUN(timedout == false);
+      }
+    }
+  }
+
+  return ESP_OK;
+}
+
 esp_err_t _test_DataBuf() {
   {
     DataBuf buf;
@@ -310,6 +385,7 @@ esp_err_t _run() {
   if (_test_ZWAutoRelease() != ESP_OK) return ESP_FAIL;
   if (_test_ZWDataOrError() != ESP_OK) return ESP_FAIL;
   if (_test_ZWMacros_EventWait() != ESP_OK) return ESP_FAIL;
+  if (_test_ZWMacros_Semaphore() != ESP_OK) return ESP_FAIL;
   if (_test_DataBuf() != ESP_OK) return ESP_FAIL;
 
   return ESP_OK;
