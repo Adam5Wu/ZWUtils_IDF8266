@@ -5,4 +5,5 @@
 #include "ZWMacros.h"
 #include "ZWAutoRelease.hpp"
 #include "ZWDataOrError.hpp"
+#include "ZWParsers.hpp"
 #include "ZWDataBuf.hpp"

@@ -43,8 +43,14 @@ size_t failed_count = 0;
   }
 
 esp_err_t _test_ZWStrings() {
-  TEST_RUN(STRLEN(TAG) == 4);
-  TEST_RUN(PasswordRedact(TAG) == "M**n");
+  TEST_RUN(STRLEN("12345") == 5);
+  TEST_RUN(STRLEN("") == 0);
+
+  TEST_RUN(PasswordRedact("abcde") == "a***e");
+  TEST_RUN(PasswordRedact("ade") == "a*e");
+  TEST_RUN(PasswordRedact("ae") == "ae");
+  TEST_RUN(PasswordRedact("a") == "a");
+  TEST_RUN(PasswordRedact("") == "");
 
   return ESP_OK;
 }
@@ -248,6 +254,32 @@ esp_err_t _test_ZWDataOrError() {
   return ESP_OK;
 }
 
+#define IS_OK_AND_VALUE(DoE, op) \
+  auto ret = DoE;                \
+  ret && *ret op
+
+esp_err_t _test_ZWParsers() {
+  TEST_RUN(ParseHex('0' - 1) == -1);
+  TEST_RUN(ParseHex('0') == 0);
+  TEST_RUN(ParseHex('9') == 9);
+  TEST_RUN(ParseHex('9' + 1) == -1);
+  TEST_RUN(ParseHex('a' - 1) == -1);
+  TEST_RUN(ParseHex('a') == 10);
+  TEST_RUN(ParseHex('f') == 15);
+  TEST_RUN(ParseHex('f' + 1) == -1);
+  TEST_RUN(ParseHex('A' - 1) == -1);
+  TEST_RUN(ParseHex('A') == 10);
+  TEST_RUN(ParseHex('F') == 15);
+  TEST_RUN(ParseHex('F' + 1) == -1);
+
+  TEST_RUN(IS_OK_AND_VALUE(UrlDecode(""), == ""));
+  TEST_RUN(IS_OK_AND_VALUE(UrlDecode("abc"), == "abc"));
+  TEST_RUN(IS_OK_AND_VALUE(UrlDecode("a%62%63"), == "abc"));
+  TEST_RUN(!UrlDecode("%x"));
+
+  return ESP_OK;
+}
+
 esp_err_t _test_ZWMacros_EventWait() {
   AutoReleaseRes<EventGroupHandle_t> TestEvents(xEventGroupCreate(), [](EventGroupHandle_t&& x) {
     if (x != NULL) vEventGroupDelete(x);
@@ -384,6 +416,7 @@ esp_err_t _run() {
   if (_test_ZWMacros_Basic() != ESP_OK) return ESP_FAIL;
   if (_test_ZWAutoRelease() != ESP_OK) return ESP_FAIL;
   if (_test_ZWDataOrError() != ESP_OK) return ESP_FAIL;
+  if (_test_ZWParsers() != ESP_OK) return ESP_FAIL;
   if (_test_ZWMacros_EventWait() != ESP_OK) return ESP_FAIL;
   if (_test_ZWMacros_Semaphore() != ESP_OK) return ESP_FAIL;
   if (_test_DataBuf() != ESP_OK) return ESP_FAIL;

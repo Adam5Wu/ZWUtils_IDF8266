@@ -43,7 +43,7 @@ class DataOrError {
   DataOrError(const DataOrError&) = delete;
   DataOrError& operator=(const DataOrError&) = delete;
 
-  DataOrError(DataOrError&& in) { *this = in; }
+  DataOrError(DataOrError&& in) { *this = std::move(in); }
   DataOrError& operator=(DataOrError&& in) {
     return data_or_error_ = std::move(in.data_or_error_), *this;
   }
@@ -62,8 +62,8 @@ class DataOrError {
   std::variant<T, esp_err_t> data_or_error_;
 };
 
-#define ASSIGN_OR_RETURN(val, statement)                                    \
-  auto ZW_UNIQUE_VAR(data_or_error) = (statement);                             \
+#define ASSIGN_OR_RETURN(val, statement)                                          \
+  auto ZW_UNIQUE_VAR(data_or_error) = (statement);                                \
   if (!ZW_UNIQUE_VAR(data_or_error)) return ZW_UNIQUE_VAR(data_or_error).error(); \
   val = std::move(*ZW_UNIQUE_VAR(data_or_error))
 
