@@ -62,10 +62,12 @@ class DataOrError {
   std::variant<T, esp_err_t> data_or_error_;
 };
 
-#define ASSIGN_OR_RETURN(val, statement)                                          \
-  auto ZW_UNIQUE_VAR(data_or_error) = (statement);                                \
-  if (!ZW_UNIQUE_VAR(data_or_error)) return ZW_UNIQUE_VAR(data_or_error).error(); \
-  val = std::move(*ZW_UNIQUE_VAR(data_or_error))
+#define __ASSIGN_OR_RETURN(val, statement, __auto_var) \
+  auto __auto_var = (statement);                       \
+  if (!__auto_var) return __auto_var.error();          \
+  val = std::move(*__auto_var)
+
+#define ASSIGN_OR_RETURN(val, statement) __ASSIGN_OR_RETURN(val, statement, ZW_UNIQUE_VAR(__DoE))
 
 }  // namespace zw::esp8266::utils
 

@@ -19,6 +19,15 @@ inline int8_t ParseHex(char c) {
   return -1;  // Error
 }
 
+inline DataOrError<uint8_t> ParseHexByte(const char* in_ptr) {
+  int8_t h1 = ParseHex(*in_ptr++);
+  if (h1 < 0) return ESP_ERR_INVALID_ARG;
+  int8_t h2 = ParseHex(*in_ptr++);
+  if (h2 < 0) return ESP_ERR_INVALID_ARG;
+
+  return (uint8_t)((h1 << 4) | h2);
+}
+
 inline DataOrError<std::string> UrlDecode(const std::string& in_str) {
   std::string out(in_str.size(), '\0');
   const char* in_ptr = in_str.data();
@@ -30,13 +39,8 @@ inline DataOrError<std::string> UrlDecode(const std::string& in_str) {
       out[out_len++] = c;
       continue;
     }
-
-    int8_t h1 = ParseHex(*in_ptr++);
-    if (h1 < 0) return ESP_ERR_INVALID_ARG;
-    int8_t h2 = ParseHex(*in_ptr++);
-    if (h2 < 0) return ESP_ERR_INVALID_ARG;
-
-    out[out_len++] = (h1 << 4) | h2;
+    ASSIGN_OR_RETURN(out[out_len++], ParseHexByte(in_ptr));
+    in_ptr += 2;
   }
 
   out.resize(out_len);

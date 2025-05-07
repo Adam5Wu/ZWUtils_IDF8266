@@ -3,9 +3,8 @@
 #ifndef ZWUTILS_IDF8266_MACROS_H
 #define ZWUTILS_IDF8266_MACROS_H
 
-#define __ZW_STRINGIFY(x) #x
-#define ZW_STRINGIFY(x) __ZW_STRINGIFY(x)
-#define ZW_UNIQUE_VAR(prefix) prefix##__COUNTER__
+#define ZW_STRINGIFY(x) __STRING(x)
+#define ZW_UNIQUE_VAR(prefix) __CONCAT(prefix, __COUNTER__)
 
 //---------------------------
 // Error handling

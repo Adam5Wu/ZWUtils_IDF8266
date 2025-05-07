@@ -1,6 +1,6 @@
 {
   "name": "ZWUtils-IDF8266",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Utility collection for ESP8266 IDF-style C++ development",
   "keywords": "rtos, esp8266",
   "frameworks": "esp8266-rtos-sdk",

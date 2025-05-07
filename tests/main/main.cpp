@@ -251,6 +251,27 @@ esp_err_t _test_ZWDataOrError() {
     TEST_RUN(Test->length() == 2);
   }
 
+  {
+    TEST_RUN([] {
+      ASSIGN_OR_RETURN(auto test, DataOrError<std::string>("Test"));
+      return ESP_FAIL;
+    }() == ESP_FAIL);
+  }
+
+  {
+    TEST_RUN([] {
+      ASSIGN_OR_RETURN(auto test, DataOrError<std::string>(ESP_FAIL));
+      return ESP_OK;
+    }() == ESP_FAIL);
+  }
+
+  {
+    ASSIGN_OR_RETURN(auto test1, DataOrError<bool>(true));
+    TEST_RUN(test1 == true);
+    ASSIGN_OR_RETURN(auto test2, DataOrError<bool>(false));
+    TEST_RUN(test2 == false);
+  }
+
   return ESP_OK;
 }
 
