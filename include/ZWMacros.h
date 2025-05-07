@@ -3,9 +3,8 @@
 #ifndef ZWUTILS_IDF8266_MACROS_H
 #define ZWUTILS_IDF8266_MACROS_H
 
-#define __ZW_STRINGIFY(x) #x
-#define ZW_STRINGIFY(x) __ZW_STRINGIFY(x)
-#define ZW_UNIQUE_VAR(prefix) prefix##__COUNTER__
+#define ZW_STRINGIFY(x) __STRING(x)
+#define ZW_UNIQUE_VAR(prefix) __CONCAT(prefix, __COUNTER__)
 
 //---------------------------
 // Error handling
@@ -31,28 +30,9 @@
     esp_err_t __err_rc = (expression);                                                      \
     cleanup;                                                                                \
     if (__err_rc != ESP_OK) {                                                               \
-      ESP_LOGW(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
+      ESP_LOGD(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
       ret_clean;                                                                            \
       return __err_rc;                                                                      \
-    }                                                                                       \
-  }
-#endif
-
-#ifdef NDEBUG
-#define ZW_BREAK_ON_ERROR_SIMPLE(expression) \
-  {                                          \
-    esp_err_t __err_rc = (expression);       \
-    if (__err_rc != ESP_OK) {                \
-      break;                                 \
-    }                                        \
-  }
-#else
-#define ZW_BREAK_ON_ERROR_SIMPLE(expression)                                                \
-  {                                                                                         \
-    esp_err_t __err_rc = (expression);                                                      \
-    if (__err_rc != ESP_OK) {                                                               \
-      ESP_LOGW(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
-      break;                                                                                \
     }                                                                                       \
   }
 #endif
@@ -73,12 +53,14 @@
     esp_err_t __err_rc = (expression);                                                      \
     cleanup;                                                                                \
     if (__err_rc != ESP_OK) {                                                               \
-      ESP_LOGW(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
+      ESP_LOGD(TAG, "ESP Error (%s:%d) %d (0x%x)", __FILE__, __LINE__, __err_rc, __err_rc); \
       ret_clean;                                                                            \
       break;                                                                                \
     }                                                                                       \
   }
 #endif
+
+#define ZW_BREAK_ON_ERROR_SIMPLE(expression) ZW_BREAK_ON_ERROR(expression, , )
 
 #define ZW_GOTO_ON_ERROR(expression, cleanup, tag) \
   {                                                \
@@ -106,5 +88,31 @@
 
 #define ZW_BLOCK_FOR_EVENTS(event_group, event_bits, on_event) \
   ZW_WAIT_FOR_EVENTS(event_group, event_bits, true, true, portMAX_DELAY, on_event, )
+
+//---------------------------
+// Synchronization
+//---------------------------
+
+// Assume #include "freertos/FreeRTOS.h"
+// Assume #include "freertos/semphr.h"
+// Assume #include "ZWAutoRelease.hpp"
+
+#define ZW_ACQUIRE_FOR_SCOPE(lock_obj, delay, otherwise) \
+  if (xSemaphoreTake(lock_obj, delay) != pdTRUE) {       \
+    otherwise;                                           \
+  }                                                      \
+  ::zw::esp8266::utils::AutoRelease ZW_UNIQUE_VAR(lock_releaser)([&] { xSemaphoreGive(lock_obj); })
+
+#define ZW_ACQUIRE_FOR_SCOPE_SIMPLE(lock_obj) ZW_ACQUIRE_FOR_SCOPE(lock_obj, portMAX_DELAY, )
+
+#define ZW_RECURSIVE_ACQUIRE_FOR_SCOPE(lock_obj, delay, otherwise) \
+  if (xSemaphoreTakeRecursive(lock_obj, delay) != pdTRUE) {        \
+    otherwise;                                                     \
+  }                                                                \
+  ::zw::esp8266::utils::AutoRelease ZW_UNIQUE_VAR(lock_releaser)(  \
+      [&] { xSemaphoreGiveRecursive(lock_obj); })
+
+#define ZW_RECURSIVE_ACQUIRE_FOR_SCOPE_SIMPLE(lock_obj) \
+  ZW_RECURSIVE_ACQUIRE_FOR_SCOPE(lock_obj, portMAX_DELAY, )
 
 #endif  // ZWUTILS_IDF8266_MACROS_H
