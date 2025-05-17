@@ -59,6 +59,12 @@ class AutoReleaseRes {
     return *this;
   }
 
+  AutoReleaseRes& operator=(T&& res_in) {
+    Reset();
+    res_ = std::move(res_in);
+    return *this;
+  }
+
   const T& operator*() const { return res_; }
   const T* operator->() const { return &res_; }
 

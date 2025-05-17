@@ -182,18 +182,28 @@ esp_err_t _test_ZWAutoRelease() {
   }
 
   {
-    bool released = false;
     int release_secret = 0;
     {
       AutoReleaseRes<int> TestRel(123, [&](int&& x) {
-        released = true;
         release_secret = x;
       });
-      TEST_ASSERT(released == false);
       TEST_ASSERT(release_secret == 0);
     }
-    TEST_RUN(released == true);
     TEST_RUN(release_secret == 123);
+  }
+
+  {
+    int release_secret = 0;
+    {
+      AutoReleaseRes<int> TestRel(123, [&](int&& x) {
+        release_secret = x;
+      });
+      TEST_ASSERT(release_secret == 0);
+
+      TestRel = 456;
+      TEST_ASSERT(release_secret == 123);
+    }
+    TEST_RUN(release_secret == 456);
   }
 
   return ESP_OK;
